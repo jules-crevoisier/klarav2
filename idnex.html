@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="fr" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Klara Peuvot — Portfolio</title>
+    <meta name="description" content="Portfolio de Klara Peuvot, étudiante en 2ème année de BUT MMI à l'IUT de Troyes. Développement web, projets créatifs." />
+    <meta name="keywords" content="klara peuvot portfolio, klara peuvot cv, klara peuvot web developer, klara peuvot MMI" />
+    <meta name="author" content="Klara Peuvot" />
+    <link href="img/favicon.jpg" rel="icon" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;display=swap"
+        rel="stylesheet" />
+
+    <!-- Scripts -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            cursor: none;
+            /* Hide default cursor */
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: radial-gradient(circle at center, #f4f4f5 0%, #e4e4e7 100%);
+            transition: opacity 0.4s ease;
+        }
+
+        /* Custom Cursor */
+        #cursor {
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s ease;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+
+        .cursor-claw {
+            width: 32px;
+            height: 32px;
+            border: 4px solid #FFD54F;
+            /* Lego Yellow - plus vif */
+            border-radius: 50%;
+            border-bottom-color: transparent;
+            transform: rotate(-45deg);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .cursor-active .cursor-claw {
+            transform: scale(0.8) rotate(-45deg);
+            border-width: 6px;
+        }
+
+        /* Loader - style Lego */
+        .loader-bg {
+            background: radial-gradient(ellipse at center, #e4e4e7 0%, #d4d4d8 50%, #a1a1aa 100%);
+        }
+        .loader-brick {
+            border-radius: 3px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 3px 6px rgba(0,0,0,0.2);
+            animation: brick-stack 0.8s ease-in-out infinite alternate;
+        }
+        .loader-brick::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40%;
+            height: 6px;
+            background: inherit;
+            border-radius: 50%;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+            filter: brightness(0.95);
+        }
+        @keyframes brick-stack {
+            from { transform: translateY(0) scale(1); }
+            to { transform: translateY(-12px) scale(1.05); }
+        }
+        .loader-bar-track {
+            background: rgba(255,255,255,0.3);
+            border-radius: 6px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+        }
+        .loader-bar-fill {
+            border-radius: 6px;
+            box-shadow: 0 0 12px rgba(255, 235, 59, 0.5), inset 0 1px 0 rgba(255,255,255,0.4);
+            transition: width 0.25s ease-out;
+        }
+        .loader-title {
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            letter-spacing: 0.2em;
+        }
+
+        /* UI Overlays */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .page {
+            transition: opacity 0.3s ease;
+        }
+
+        /* Responsive: curseur personnalisé masqué sur tactile / petit écran */
+        @media (max-width: 767px) {
+            body { cursor: auto; }
+            #cursor { display: none !important; }
+        }
+    </style>
+</head>
+
+<body class="bg-zinc-100 text-zinc-800 antialiased overflow-x-hidden w-full min-h-screen selection:bg-yellow-200 md:overflow-hidden md:h-screen">
+    <!-- Custom Cursor -->
+    <div id="cursor">
+        <div class="cursor-claw"></div>
+    </div>
+
+    <!-- Loader Overlay - style Lego -->
+    <div id="loader" class="loader-bg fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-700 px-4">
+        <div class="flex flex-col items-center">
+            <div class="flex gap-2 md:gap-3 mb-6 md:mb-10">
+                <div class="loader-brick w-9 h-6 md:w-12 md:h-8 relative" style="background-color: #f44336; animation-delay: 0s;"></div>
+                <div class="loader-brick w-9 h-6 md:w-12 md:h-8 relative" style="background-color: #FFEB3B; animation-delay: 0.15s;"></div>
+                <div class="loader-brick w-9 h-6 md:w-12 md:h-8 relative" style="background-color: #2196F3; animation-delay: 0.3s;"></div>
+                <div class="loader-brick w-9 h-6 md:w-12 md:h-8 relative" style="background-color: #00e676; animation-delay: 0.45s;"></div>
+            </div>
+            <p class="loader-title text-xs md:text-sm font-semibold uppercase text-zinc-700 mb-4 md:mb-6">
+                Assembling Universe
+            </p>
+            <div class="loader-bar-track w-48 md:w-56 h-2.5 md:h-3 overflow-hidden">
+                <div id="progress-bar" class="loader-bar-fill h-full w-0" style="background: linear-gradient(90deg, #FFEB3B, #f44336);"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Musique de fond à l'arrivée (formation KLARA PEUVOT) -->
+    <audio id="loader-music" preload="auto" src="lego-building-classic-208359.mp3"></audio>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 w-full z-40 px-4 py-4 md:px-8 md:py-6 flex justify-between items-center gap-2 pointer-events-none">
+        <a href="#" id="nav-logo" data-page="home"
+            class="pointer-events-auto px-3 py-1.5 md:px-4 md:py-2 rounded-full flex items-center gap-2 shadow-sm transition-transform hover:scale-105 cursor-none-target no-underline bg-white text-zinc-900 border border-zinc-200">
+            <div class="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full flex-shrink-0" style="background-color: #f44336;"></div>
+            <span class="text-xs md:text-sm font-semibold tracking-tight hidden md:inline">KLARA PEUVOT</span>
+            <span class="text-xs font-semibold tracking-tight md:hidden">KLARA</span>
+        </a>
+
+        <div class="glass-panel pointer-events-auto px-0.5 py-0.5 md:px-1 md:py-1 rounded-full flex gap-0.5 md:gap-1 shadow-sm flex-wrap justify-end">
+            <button data-page="home"
+                class="nav-btn px-2.5 py-1.5 md:px-4 md:py-2 rounded-full hover:bg-white/50 text-[10px] md:text-xs font-medium transition-colors cursor-none-target">
+                Home
+            </button>
+            <button data-page="work"
+                class="nav-btn px-2.5 py-1.5 md:px-4 md:py-2 rounded-full hover:bg-white/50 text-[10px] md:text-xs font-medium transition-colors cursor-none-target">
+                Work
+            </button>
+            <button data-page="about"
+                class="nav-btn px-2.5 py-1.5 md:px-4 md:py-2 rounded-full hover:bg-white/50 text-[10px] md:text-xs font-medium transition-colors cursor-none-target">
+                About
+            </button>
+            <button data-page="contact"
+                class="nav-btn px-2.5 py-1.5 md:px-4 md:py-2 rounded-full hover:bg-white/50 text-[10px] md:text-xs font-medium transition-transform hover:scale-105 cursor-none-target">
+                Contact
+            </button>
+        </div>
+    </nav>
+
+    <!-- Page: Home -->
+    <main id="page-home" class="page fixed inset-0 z-30 pointer-events-none flex flex-col justify-between p-4 md:p-8">
+        <div class="absolute bottom-4 left-4 right-4 md:bottom-8 md:left-8 md:right-auto pointer-events-auto flex flex-col gap-3 md:gap-5 max-w-full md:max-w-sm">
+            <div class="glass-panel px-4 py-4 md:px-6 md:py-5 rounded-xl md:rounded-2xl shadow-xl border border-white/30 cursor-none-target">
+                <p class="text-[10px] md:text-xs font-semibold text-zinc-600 uppercase tracking-widest mb-1.5 md:mb-2">Présentation</p>
+                <p class="text-sm md:text-base text-zinc-800 leading-relaxed">Étudiante en 2<sup>ème</sup> année de BUT MMI à l'IUT de Troyes. Recherche alternance 10 semaines en développement Full Stack.</p>
+            </div>
+            <div class="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-zinc-600 cursor-none-target flex-wrap">
+                <span class="flex items-center gap-1 md:gap-1.5"><iconify-icon icon="solar:map-point-linear" width="14" class="md:w-4"></iconify-icon> Troyes</span>
+                <span class="w-1 h-1 rounded-full bg-zinc-400"></span>
+                <span>Compiègne</span>
+                <span class="w-1 h-1 rounded-full bg-zinc-400"></span>
+                <span>Paris</span>
+            </div>
+            <div class="glass-panel p-4 md:p-5 rounded-xl md:rounded-2xl w-full md:w-72 shadow-xl border border-white/30 backdrop-blur-xl transition-transform hover:-translate-y-1 duration-300 cursor-none-target">
+                <div class="flex items-center gap-2 mb-3 md:mb-4 text-zinc-600">
+                    <iconify-icon icon="solar:graph-up-linear" width="16" class="md:w-[18px]"></iconify-icon>
+                    <span class="text-[10px] md:text-xs font-semibold tracking-wide uppercase">Skills</span>
+                </div>
+                <div class="space-y-3 md:space-y-4">
+                    <div class="group cursor-none-target">
+                        <div class="flex justify-between text-xs md:text-sm mb-1 md:mb-1.5">
+                            <span class="font-medium text-zinc-800">PHP / MySQL</span>
+                            <span class="text-zinc-500 font-medium">85%</span>
+                        </div>
+                        <div class="h-2 md:h-2.5 w-full bg-zinc-200 rounded-full overflow-hidden">
+                            <div class="h-full w-[85%] relative rounded-full" style="background-color: #f44336;">
+                                <div class="absolute inset-0 bg-white/20"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="group cursor-none-target">
+                        <div class="flex justify-between text-xs md:text-sm mb-1 md:mb-1.5">
+                            <span class="font-medium text-zinc-800">HTML / CSS / JS</span>
+                            <span class="text-zinc-500 font-medium">90%</span>
+                        </div>
+                        <div class="h-2 md:h-2.5 w-full bg-zinc-200 rounded-full overflow-hidden">
+                            <div class="h-full w-[90%] relative rounded-full" style="background-color: #2196F3;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="fixed bottom-4 md:bottom-8 left-1/2 -translate-x-1/2 z-20 pointer-events-none opacity-50 hidden md:block">
+            <p class="text-[10px] uppercase tracking-widest text-zinc-500 flex items-center gap-2">
+                <iconify-icon icon="solar:mouse-linear" width="14"></iconify-icon>
+                Clique sur les briques pour les faire exploser
+            </p>
+        </div>
+    </main>
+
+    <!-- Page: Work (Projects) -->
+    <main id="page-work" class="page fixed inset-0 z-30 hidden pointer-events-none">
+        <div class="absolute inset-0 flex flex-col items-center justify-start md:justify-center p-4 md:p-8 overflow-auto pointer-events-auto">
+            <div class="max-w-5xl w-full py-12 md:py-20 mt-16 md:mt-0 w-full">
+                <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-zinc-800 mb-2 flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full" style="background-color: #f44336;"></span>
+                    Projets
+                </h1>
+                <p class="text-xs md:text-sm text-zinc-500 uppercase tracking-widest mb-6 md:mb-10">Sélection de travaux MMI et personnels</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    <a href="https://mm01.thorelnicolas.fr/archives/p24/peuvotkl/projet/" target="_blank" rel="noopener noreferrer" class="project-card cursor-none-target glass-panel rounded-2xl overflow-hidden shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
+                        <div class="h-36 overflow-hidden bg-zinc-200">
+                            <img src="img/portfolio/projet-1.jpg" alt="Amélie Poulain" class="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-110" onerror="this.style.display='none'">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex gap-2 mb-2 flex-wrap">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-orange-500/20 text-orange-700">HTML</span>
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-blue-500/20 text-blue-700">CSS</span>
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-yellow-500/20 text-amber-700">JS</span>
+                            </div>
+                            <h2 class="text-base font-semibold text-zinc-800 mb-1">Le fabuleux destin d'Amélie Poulain</h2>
+                            <p class="text-xs text-zinc-500">Site vitrine immersif sur l'univers du film, charte graphique unique.</p>
+                        </div>
+                    </a>
+                    <a href="http://mmi24f12.sae105.ovh/index.php" target="_blank" rel="noopener noreferrer" class="project-card cursor-none-target glass-panel rounded-2xl overflow-hidden shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
+                        <div class="h-36 overflow-hidden bg-zinc-200">
+                            <img src="img/portfolio/projet-2.jpg" alt="Cookies" class="w-full h-full object-cover object-top" onerror="this.style.display='none'">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex gap-2 mb-2 flex-wrap">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-orange-500/20 text-orange-700">SAE 105</span>
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-green-500/20 text-green-700">JSON</span>
+                            </div>
+                            <h2 class="text-base font-semibold text-zinc-800 mb-1">Projet Cookies</h2>
+                            <p class="text-xs text-zinc-500">Site dynamique avec affichage de produits via JSON, sans SQL.</p>
+                        </div>
+                    </a>
+                    <a href="https://mmi24f12.sae203.ovh/" target="_blank" rel="noopener noreferrer" class="project-card cursor-none-target glass-panel rounded-2xl overflow-hidden shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
+                        <div class="h-36 overflow-hidden bg-zinc-200">
+                            <img src="img/portfolio/projet-3.jpg" alt="Webtoon" class="w-full h-full object-cover object-top" onerror="this.style.display='none'">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex gap-2 mb-2 flex-wrap">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-purple-500/20 text-purple-700">PHP</span>
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-blue-500/20 text-blue-700">MySQL</span>
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-pink-500/20 text-pink-700">SAE 203</span>
+                            </div>
+                            <h2 class="text-base font-semibold text-zinc-800 mb-1">Lecteur Webtoon</h2>
+                            <p class="text-xs text-zinc-500">Application avec BDD pour lire et noter des webtoons.</p>
+                        </div>
+                    </a>
+                    <a href="https://mmi24f12.sae202.ovh/agence/" target="_blank" rel="noopener noreferrer" class="project-card cursor-none-target glass-panel rounded-2xl overflow-hidden shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
+                        <div class="h-36 overflow-hidden bg-zinc-200">
+                            <img src="img/portfolio/projet-4.jpg" alt="Agence" class="w-full h-full object-cover object-top" onerror="this.style.display='none'">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex gap-2 mb-2 flex-wrap">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-blue-500/20 text-blue-700">WordPress</span>
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-zinc-500/20 text-zinc-600">Agence</span>
+                            </div>
+                            <h2 class="text-base font-semibold text-zinc-800 mb-1">Agence Événementielle</h2>
+                            <p class="text-xs text-zinc-500">Site corporate sous WordPress, thème personnalisé (SAE 202).</p>
+                        </div>
+                    </a>
+                    <a href="https://mmi24f12.sae202.ovh" target="_blank" rel="noopener noreferrer" class="project-card cursor-none-target glass-panel rounded-2xl overflow-hidden shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
+                        <div class="h-36 overflow-hidden bg-zinc-200">
+                            <img src="img/portfolio/projet-5.jpg" alt="MVC Event" class="w-full h-full object-cover object-top" onerror="this.style.display='none'">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex gap-2 mb-2 flex-wrap">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-red-500/20 text-red-700">MVC</span>
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-purple-500/20 text-purple-700">PHP</span>
+                            </div>
+                            <h2 class="text-base font-semibold text-zinc-800 mb-1">Site Événementiel MVC</h2>
+                            <p class="text-xs text-zinc-500">Développement from scratch avec structure Modèle-Vue-Contrôleur.</p>
+                        </div>
+                    </a>
+                    <a href="https://mmi24f12.mmi-troyes.fr/cookies/" target="_blank" rel="noopener noreferrer" class="project-card cursor-none-target glass-panel rounded-2xl overflow-hidden shadow-lg backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl block">
+                        <div class="h-36 overflow-hidden bg-zinc-200">
+                            <img src="img/portfolio/projet-6.jpg" alt="Cookie Clicker" class="w-full h-full object-cover object-top" onerror="this.style.display='none'">
+                        </div>
+                        <div class="p-4">
+                            <div class="flex gap-2 mb-2 flex-wrap">
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-yellow-500/20 text-amber-700">JavaScript</span>
+                                <span class="text-xs font-medium px-2 py-1 rounded-full bg-pink-500/20 text-pink-700">Jeu</span>
+                            </div>
+                            <h2 class="text-base font-semibold text-zinc-800 mb-1">Cookie Clicker</h2>
+                            <p class="text-xs text-zinc-500">Récréation du jeu incrémental, logique JS scores et bonus.</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Page: About -->
+    <main id="page-about" class="page fixed inset-0 z-30 hidden pointer-events-none">
+        <div class="absolute inset-0 flex flex-col items-center justify-start md:justify-center p-4 md:p-8 overflow-auto pointer-events-auto">
+            <div class="max-w-2xl w-full py-12 md:py-20 mt-16 md:mt-0 w-full">
+                <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-zinc-800 mb-2 flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full" style="background-color: #2196F3;"></span>
+                    À propos
+                </h1>
+                <p class="text-xs md:text-sm text-zinc-500 uppercase tracking-widest mb-6 md:mb-8">Qui suis-je</p>
+                <div class="glass-panel p-5 md:p-8 rounded-xl md:rounded-2xl shadow-lg backdrop-blur-xl cursor-none-target">
+                    <p class="text-zinc-700 leading-relaxed">
+                        En 2<sup>ème</sup> année de BUT MMI à l'IUT de Troyes, je combine une passion pour la logique du développement Backend avec la créativité du Frontend. Mon parcours scientifique m'a donné une rigueur que j'applique dans la gestion de bases de données et l'architecture de mes projets.</p>
+                    <p class="text-zinc-700 leading-relaxed mb-8">
+                        Responsable logistique du BDE MMI (2024-2026), ce qui m'a appris la gestion de projet et le travail d'équipe.
+                    </p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="glass-panel p-4 rounded-xl">
+                            <h4 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Loisirs</h4>
+                            <p class="text-sm text-zinc-700">Lego, Jeux vidéo, Cinéma</p>
+                        </div>
+                        <div class="glass-panel p-4 rounded-xl">
+                            <h4 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1">Langues</h4>
+                            <p class="text-sm text-zinc-700">Anglais (B2), Espagnol (A2)</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 mb-3 text-zinc-500">
+                        <iconify-icon icon="solar:graph-up-linear" width="16"></iconify-icon>
+                        <span class="text-xs font-semibold tracking-wide uppercase">Parcours</span>
+                    </div>
+                    <div class="space-y-4 border-l-2 border-zinc-300 pl-6 ml-1">
+                        <div>
+                            <h3 class="text-sm font-semibold text-zinc-800">BUT MMI</h3>
+                            <p class="text-xs text-zinc-500">2024 – 2027 · IUT de Troyes</p>
+                            <p class="text-xs text-zinc-600 mt-0.5">Métiers du Multimédia et de l'Internet, spécialisation développement web.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-zinc-700">Cycle Préparatoire Ingénieur</h3>
+                            <p class="text-xs text-zinc-500">2023 – 2024 · UTT</p>
+                            <p class="text-xs text-zinc-600 mt-0.5">1ère année de cycle préparatoire à l'Université de Technologie de Troyes.</p>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-zinc-700">Baccalauréat Scientifique</h3>
+                            <p class="text-xs text-zinc-500">2020 – 2023 · Lycée Chrestien de Troyes</p>
+                            <p class="text-xs text-zinc-600 mt-0.5">Spécialités Maths, Physique-Chimie, SI. Option Maths Expertes.</p>
+                        </div>
+                    </div>
+                    <a href="img/CV-klara-peuvot.pdf" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 text-sm font-medium text-zinc-800 hover:underline cursor-none-target">
+                        <iconify-icon icon="solar:document-download-linear" width="18"></iconify-icon>
+                        Télécharger mon CV complet
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Page: Contact -->
+    <main id="page-contact" class="page fixed inset-0 z-30 hidden pointer-events-none">
+        <div class="absolute inset-0 flex flex-col items-center justify-start md:justify-center p-4 md:p-8 overflow-auto pointer-events-auto">
+            <div class="max-w-2xl w-full py-12 md:py-20 mt-16 md:mt-0 w-full">
+                <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-zinc-800 mb-2 flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full" style="background-color: #00e676;"></span>
+                    Contact
+                </h1>
+                <p class="text-sm text-zinc-500 uppercase tracking-widest mb-6">Prêts à travailler ensemble ?</p>
+                <p class="text-sm text-zinc-600 mb-8 max-w-lg">
+                    Je recherche un stage de 10 semaines à partir du 19 avril (Troyes, Compiègne, Paris). Mobile (Permis B + véhicule).
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
+                    <a href="tel:+33769253182" class="cursor-none-target glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg transition-all hover:-translate-y-1 flex flex-col items-center text-center">
+                        <span class="w-12 h-12 rounded-full flex items-center justify-center mb-3 text-zinc-700" style="background-color: rgba(244,67,54,0.15);">
+                            <iconify-icon icon="solar:phone-linear" width="24"></iconify-icon>
+                        </span>
+                        <h3 class="text-sm font-semibold text-zinc-800 mb-0.5">Téléphone</h3>
+                        <p class="text-xs text-zinc-500">07 69 25 31 82</p>
+                    </a>
+                    <a href="mailto:klarapeuvot@gmail.com" class="cursor-none-target glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg transition-all hover:-translate-y-1 flex flex-col items-center text-center">
+                        <span class="w-12 h-12 rounded-full flex items-center justify-center mb-3 text-zinc-700" style="background-color: rgba(33,150,243,0.15);">
+                            <iconify-icon icon="solar:letter-linear" width="24"></iconify-icon>
+                        </span>
+                        <h3 class="text-sm font-semibold text-zinc-800 mb-0.5">Email</h3>
+                        <p class="text-xs text-zinc-500 break-all">klarapeuvot@gmail.com</p>
+                    </a>
+                    <a href="https://www.linkedin.com/in/klara-peuvot" target="_blank" rel="noopener noreferrer" class="cursor-none-target glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg transition-all hover:-translate-y-1 flex flex-col items-center text-center">
+                        <span class="w-12 h-12 rounded-full flex items-center justify-center mb-3 text-zinc-700" style="background-color: rgba(0,230,118,0.15);">
+                            <iconify-icon icon="mdi:linkedin" width="24"></iconify-icon>
+                        </span>
+                        <h3 class="text-sm font-semibold text-zinc-800 mb-0.5">LinkedIn</h3>
+                        <p class="text-xs text-zinc-500">Klara Peuvot</p>
+                    </a>
+                </div>
+                <div class="glass-panel p-6 rounded-2xl flex justify-center gap-4 cursor-none-target">
+                    <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="p-3 rounded-full bg-white/60 hover:bg-white/80 transition-colors text-zinc-700" aria-label="GitHub">
+                        <iconify-icon icon="mdi:github" width="22"></iconify-icon>
+                    </a>
+                    <a href="https://www.linkedin.com/in/klara-peuvot" target="_blank" rel="noopener noreferrer" class="p-3 rounded-full bg-white/60 hover:bg-white/80 transition-colors text-zinc-700" aria-label="LinkedIn">
+                        <iconify-icon icon="mdi:linkedin" width="22"></iconify-icon>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- Audio System (Web Audio API) for "Plastic Clicks" ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playClickSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(400 + Math.random() * 200, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(3000, audioCtx.currentTime);
+            filter.frequency.linearRampToValueAtTime(500, audioCtx.currentTime + 0.05);
+
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playHoverSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            // Subtler rattle
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        // --- Custom Cursor Logic ---
+        const cursor = document.getElementById('cursor');
+        const interactiveElements = document.querySelectorAll('.cursor-none-target');
+
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.addEventListener('mousedown', () => {
+            cursor.classList.add('cursor-active');
+            playClickSound();
+        });
+        document.addEventListener('mouseup', () => cursor.classList.remove('cursor-active'));
+
+        const handleCursorHover = (el, isEnter) => {
+            if (!el || !el.matches('.cursor-none-target')) return;
+            const claw = cursor.querySelector('.cursor-claw');
+            if (isEnter) {
+                claw.style.borderColor = '#f44336';
+                claw.style.transform = 'scale(1.2) rotate(-45deg)';
+            } else {
+                claw.style.borderColor = '#FFD54F';
+                claw.style.transform = 'rotate(-45deg)';
+            }
+        };
+        document.body.addEventListener('mouseover', (e) => {
+            const target = e.target.closest('.cursor-none-target');
+            handleCursorHover(target, !!target);
+        });
+        document.body.addEventListener('mouseout', (e) => {
+            if (!e.relatedTarget || !e.relatedTarget.closest?.('.cursor-none-target'))
+                handleCursorHover(null, false);
+        });
+        interactiveElements.forEach(el => {
+            el.addEventListener('mouseenter', () => handleCursorHover(el, true));
+            el.addEventListener('mouseleave', () => handleCursorHover(null, false));
+        });
+
+        // --- Page navigation ---
+        const pages = document.querySelectorAll('.page');
+        const navBtns = document.querySelectorAll('.nav-btn, [data-page]');
+        let currentPage = 'home';
+
+        const showPage = (pageId) => {
+            currentPage = pageId;
+            pages.forEach(p => {
+                p.classList.add('hidden');
+                p.classList.remove('flex');
+                p.style.pointerEvents = 'none';
+            });
+            const page = document.getElementById('page-' + pageId);
+            if (page) {
+                page.classList.remove('hidden');
+                page.classList.add('flex');
+                page.style.pointerEvents = '';
+            }
+            navBtns.forEach(btn => {
+                const isLogo = btn.id === 'nav-logo';
+                const isActive = btn.getAttribute('data-page') === pageId;
+                if (!isLogo) {
+                    btn.classList.toggle('bg-zinc-900', isActive);
+                    btn.classList.toggle('text-white', isActive);
+                    btn.classList.toggle('hover:bg-white/50', !isActive);
+                    btn.classList.toggle('hover:bg-zinc-800', isActive && pageId !== 'home');
+                }
+            });
+            const canvasEl = document.getElementById('canvas-container');
+            if (canvasEl) canvasEl.style.opacity = pageId === 'home' ? '1' : '0.15';
+        };
+
+        navBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const pageId = btn.getAttribute('data-page');
+                if (pageId) {
+                    playClickSound();
+                    showPage(pageId);
+                }
+            });
+        });
+
+        showPage('home');
+
+        // --- Three.js Scene Setup ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        // Fog très léger pour ne pas laver les couleurs des briques
+        scene.fog = new THREE.FogExp2(0xf4f4f5, 0.004);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const isMobile = window.innerWidth < 768;
+        camera.position.set(0, 0, isMobile ? 82 : 60); // Dézoomé sur téléphone pour voir tout "KLARA"
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 10, 7);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+
+        // Extra point lights for plastic gloss
+        const pLight1 = new THREE.PointLight(0xffaa00, 0.3);
+        pLight1.position.set(-5, 5, 5);
+        scene.add(pLight1);
+
+        // --- Materials ---
+        // Plastique net, sans effet "voile" (clearcoat modéré)
+        const plasticMaterial = (color) => new THREE.MeshPhysicalMaterial({
+            color: color,
+            metalness: 0.0,
+            roughness: 0.15,
+            clearcoat: 0.4,
+            clearcoatRoughness: 0.2,
+            transparent: false,
+        });
+
+        const matRed = plasticMaterial(0xf44336);
+        const matBlue = plasticMaterial(0x2196f3);
+        const matYellow = plasticMaterial(0xffeb3b);
+        const matGreen = plasticMaterial(0x00e676);
+        const matOrange = plasticMaterial(0xff9800);
+        const matPink = plasticMaterial(0xe91e63);
+        const matCyan = plasticMaterial(0x00bcd4);
+        const matPurple = plasticMaterial(0x9c27b0);
+        const matLime = plasticMaterial(0xcddc39);
+        const matTeal = plasticMaterial(0x009688);
+        const matAmber = plasticMaterial(0xffc107);
+        const matIndigo = plasticMaterial(0x673ab7);
+        // Une couleur par lettre pour "KLARA PEUVOT" (K L A R A P E U V O T)
+        const letterMaterials = {
+            'K': matRed, 'L': matBlue, 'A': matYellow, 'R': matGreen, 'P': matOrange,
+            'E': matPink, 'U': matCyan, 'V': matPurple, 'O': matLime, 'T': matTeal
+        };
+
+        // --- Geometry Helper: 2x4 Brick (taille augmentée) ---
+        const BRICK_SCALE = 1.35;
+        function createBrickGeometry() {
+            const geometry = new THREE.BoxGeometry(1 * BRICK_SCALE, 0.6 * BRICK_SCALE, 1 * BRICK_SCALE);
+            return geometry;
+        }
+
+        const brickGeo = createBrickGeometry();
+        const studGeo = new THREE.CylinderGeometry(0.3 * BRICK_SCALE, 0.3 * BRICK_SCALE, 0.2 * BRICK_SCALE, 16);
+
+        // Group to hold our "Name" bricks
+        const bricksGroup = new THREE.Group();
+        bricksGroup.scale.set(1.25, 1.25, 1.25);
+        scene.add(bricksGroup);
+
+        // Grid for "KLARA" (mobile) ou "KLARA PEUVOT" (desktop)
+        const font = {
+            K: [[1, 0, 1], [1, 1, 0], [1, 0, 0], [1, 1, 0], [1, 0, 1]], L: [[1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 1, 1]],
+            A: [[0, 1, 0], [1, 0, 1], [1, 1, 1], [1, 0, 1], [1, 0, 1]], R: [[1, 1, 0], [1, 0, 1], [1, 1, 0], [1, 0, 1], [1, 0, 1]],
+            P: [[1, 1, 0], [1, 0, 1], [1, 1, 0], [1, 0, 0], [1, 0, 0]], E: [[1, 1, 1], [1, 0, 0], [1, 1, 1], [1, 0, 0], [1, 1, 1]],
+            U: [[1, 0, 1], [1, 0, 1], [1, 0, 1], [1, 0, 1], [0, 1, 0]], V: [[1, 0, 1], [1, 0, 1], [1, 0, 1], [1, 0, 1], [0, 1, 0]],
+            O: [[0, 1, 0], [1, 0, 1], [1, 0, 1], [1, 0, 1], [0, 1, 0]], T: [[1, 1, 1], [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0]],
+            " ": [[0], [0], [0], [0], [0]]
+        };
+
+        const text = isMobile ? "KLARA" : "KLARA PEUVOT";
+        let grid = [[], [], [], [], []];
+
+        for (let char of text) {
+            const letter = font[char.toUpperCase()] || font[" "];
+            const charCode = char.toUpperCase() === ' ' ? null : char.toUpperCase();
+            for (let r = 0; r < 5; r++) {
+                grid[r].push(0); // Spacing
+                (letter[r] || []).forEach(cell => grid[r].push(cell ? charCode : 0));
+            }
+        }
+
+        const bricks = [];
+        const originalPositions = [];
+
+        // Build the wall (Vertical) - briques qui se touchent (spacing = taille réelle)
+        const brickWidth = 1 * BRICK_SCALE;
+        const brickHeight = 0.6 * BRICK_SCALE;
+        const spacingX = brickWidth;
+        const spacingY = brickHeight;
+        grid.forEach((row, rowIdx) => {
+            const y = (4 - rowIdx) * spacingY;
+            row.forEach((val, x) => {
+                if (val !== 0) {
+                    const material = letterMaterials[val] || matRed;
+                    const mesh = new THREE.Mesh(brickGeo, material);
+
+                    const posX = (x - row.length / 2) * spacingX;
+                    const posZ = 0;
+
+                    mesh.position.set(posX, y, posZ);
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+
+                    const stud = new THREE.Mesh(studGeo, material);
+                    stud.position.set(0, 0.35 * BRICK_SCALE, 0);
+                    mesh.add(stud);
+
+                    mesh.userData = {
+                        originalPos: new THREE.Vector3(posX, y, posZ),
+                        exploded: false
+                    };
+
+                    bricksGroup.add(mesh);
+                    bricks.push(mesh);
+                    originalPositions.push(mesh.position.clone());
+                }
+            });
+        });
+
+        // No rotation set
+
+        // --- Interaction Logic ---
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        window.addEventListener('mousemove', (event) => {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        window.addEventListener('click', (e) => {
+            if (currentPage !== 'home') return;
+            if (e.target.closest('nav')) return;
+            if (!e.target.closest('#canvas-container')) return;
+            explodeBricks();
+        });
+
+        function explodeBricks(skipClickSound = false) {
+            bricks.forEach(brick => {
+                const target = brick.userData.exploded ? brick.userData.originalPos :
+                    new THREE.Vector3(
+                        (Math.random() - 0.5) * 72,
+                        (Math.random() - 0.5) * 42,
+                        (Math.random() - 0.5) * 28
+                    );
+
+                const targetRot = brick.userData.exploded ? { x: 0, y: 0, z: 0 } : {
+                    x: Math.random() * Math.PI,
+                    y: Math.random() * Math.PI,
+                    z: Math.random() * Math.PI
+                };
+
+                gsap.to(brick.position, {
+                    x: target.x,
+                    y: target.y,
+                    z: target.z,
+                    duration: 1.5,
+                    ease: "elastic.out(1, 0.5)",
+                    delay: Math.random() * 0.1
+                });
+
+                gsap.to(brick.rotation, {
+                    x: targetRot.x,
+                    y: targetRot.y,
+                    z: targetRot.z,
+                    duration: 1.2
+                });
+
+                brick.userData.exploded = !brick.userData.exploded;
+            });
+            if (!skipClickSound) playClickSound();
+        }
+
+        // --- Loader Logic ---
+        const progressBar = document.getElementById('progress-bar');
+        const loader = document.getElementById('loader');
+        const loaderMusic = document.getElementById('loader-music');
+
+        const startFormationMusic = () => {
+            if (!loaderMusic) return;
+            loaderMusic.volume = 0.5;
+            const play = () => loaderMusic.play().catch(() => {});
+            play();
+        };
+
+        let loaded = 0;
+        const interval = setInterval(() => {
+            loaded += Math.random() * 10;
+            if (loaded > 100) loaded = 100;
+            progressBar.style.width = loaded + '%';
+
+            if (loaded === 100) {
+                clearInterval(interval);
+                setTimeout(() => {
+                    gsap.to('#loader', {
+                        opacity: 0, duration: 0.5, onComplete: () => {
+                            loader.style.display = 'none';
+                            explodeBricks(true);
+                            setTimeout(() => {
+                                startFormationMusic();
+                                explodeBricks(true);
+                            }, 500);
+                        }
+                    });
+                }, 500);
+            }
+        }, 100);
+
+
+        // --- Animation Loop ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Raycasting for hover effect (uniquement sur la page Home)
+            if (currentPage === 'home') {
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(bricks);
+
+                if (intersects.length > 0) {
+                    const object = intersects[0].object;
+                    if (!object.userData.isHovering) {
+                        playHoverSound();
+                        object.userData.isHovering = true;
+                        gsap.to(object.position, {
+                            y: object.userData.originalPos.y + 0.2,
+                            duration: 0.1,
+                            yoyo: true,
+                            repeat: 1
+                        });
+                        cursor.classList.add('cursor-active');
+                    }
+                } else {
+                    bricks.forEach(b => {
+                        b.userData.isHovering = false;
+                    });
+                    cursor.classList.remove('cursor-active');
+                }
+            } else {
+                bricks.forEach(b => { b.userData.isHovering = false; });
+                cursor.classList.remove('cursor-active');
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Window Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>
